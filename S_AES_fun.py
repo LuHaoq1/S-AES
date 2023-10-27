@@ -153,7 +153,7 @@ class S_AES:
         ascii_string = ''.join(chr(int(temp_str[i:i + 8], 2)) for i in range(0, len(temp_str), 8))
         return ascii_string
 
-    # 加密(先默认输入为16进制明文和密钥）
+    # 16bit加密
     def encrypt(self, plain_text, secret_key):
         if len(plain_text) != 4:
             plain_text = self.binary_to_hex(plain_text)
@@ -175,6 +175,7 @@ class S_AES:
         secret_text = self.change_16to2(self.change_cov_to_str(temp))
         return secret_text
 
+    # 16bits解密
     def decrypt(self, secret_text, secret_key):
         if len(secret_text) != 4:
             secret_text = self.binary_to_hex(secret_text)
@@ -211,7 +212,6 @@ class S_AES:
     def str_encrypt(self, plain_text, secret_key):
         if len(secret_key) != 4:
             secret_key = self.binary_to_hex(secret_key)
-        print(secret_key)
         str_01_list = self.string_to_binary(plain_text)
         str_01_list = self.cut(str_01_list)
         c_list_2 = []
@@ -224,7 +224,6 @@ class S_AES:
             c_list_2.append(res_temp_2)
         # 将二进制字符串列表变为字母
         res = self.str_to_word(c_list_2)
-        print(res)
         return res
 
     # 字符串的解密函数
@@ -269,6 +268,220 @@ class S_AES:
                 execution_time = end_time - start_time  # 计算两个时间点之间的差异
                 return self.change_16to2(binary_str), str(execution_time * 1000)
 
+    # 二进制的双重加密
+    def double_encrypt(self, p, key):
+        key1 = key[:16]
+        key2 = key[16:]
+        temp_c1 = self.encrypt(p, key1)
+        res = self.encrypt(temp_c1, key2)
+        return res
+
+    # 二进制字符串双重解密
+    def double_decrypt(self, c, key):
+        key1 = key[:16]
+        key2 = key[16:]
+        temp_p1 = self.decrypt(c, key2)
+        res = self.decrypt(temp_p1, key1)
+        return res
+
+    # 字符串双重加密
+    def double_str_encrypt(self, p, key):
+        key1 = key[:16]
+        key2 = key[16:]
+        temp_c1 = self.str_encrypt(p, key1)
+        res = self.str_encrypt(temp_c1, key2)
+        return res
+
+    # 字符串的双重解密
+    def double_str_decrypt(self, c, key):
+        key1 = key[:16]
+        key2 = key[16:]
+        temp_p1 = self.str_decrypt(c, key2)
+        res = self.str_decrypt(temp_p1, key1)
+        return res
+
+    # 中间相遇攻击
+    def mid_attack(self, p, c):
+        c_list = []
+        for i in range(0, 65536):
+            binary_str_k1 = bin(i)[2:].zfill(16)  # 生成密钥
+            binary_str_k1 = self.binary_to_hex(binary_str_k1)  # 生成16进制密钥
+            c_list.append(self.encrypt(p, binary_str_k1))
+        res = []
+        count = 0
+        for i in range(0, 65536):
+            binary_str_k2 = bin(i)[2:].zfill(16)  # 生成密钥
+            binary_str_k2 = self.binary_to_hex(binary_str_k2)  # 生成16进制密钥
+            temp_p = self.decrypt(c, binary_str_k2)
+            for i in range(len(c_list)):
+                if c_list[i] == temp_p:
+                    count += 1
+                    k1 = bin(i)[2:].zfill(16)
+                    k2 = self.change_16to2(binary_str_k2)
+                    res.append(k1 + k2)
+        return res, count
+
+    # 字符串的中间相遇攻击
+    def mid_str_attack(self, p, c):
+        c_list = []
+        for i in range(0, 65536):
+            binary_str_k1 = bin(i)[2:].zfill(16)  # 生成密钥
+            binary_str_k1 = self.binary_to_hex(binary_str_k1)  # 生成16进制密钥
+            c_list.append(self.str_encrypt(p, binary_str_k1))
+        res = []
+        count = 0
+        for i in range(0, 65536):
+            binary_str_k2 = bin(i)[2:].zfill(16)  # 生成密钥
+            binary_str_k2 = self.binary_to_hex(binary_str_k2)  # 生成16进制密钥
+            temp_p = self.str_decrypt(c, binary_str_k2)
+            for i in range(len(c_list)):
+                if c_list[i] == temp_p:
+                    count += 1
+                    k1 = bin(i)[2:].zfill(16)
+                    k2 = self.change_16to2(binary_str_k2)
+                    res.append(k1 + k2)
+        return res, count
+
+    # 三重加密
+    def triple_encrypt(self, p, key):
+        key1 = key[:16]
+        key2 = key[16:32]
+        key3 = key[32:]
+        temp_c1 = self.encrypt(p, key1)
+        temp_c2 = self.encrypt(temp_c1, key2)
+        res = self.encrypt(temp_c2, key3)
+        return res
+
+    # 三重解密
+    def triple_decrypt(self, c, key):
+        key1 = key[: 16]
+        key2 = key[16: 32]
+        key3 = key[32:]
+        temp_p1 = self.decrypt(c, key3)
+        temp_p2 = self.decrypt(temp_p1, key2)
+        res = self.decrypt(temp_p2, key1)
+        return res
+
+    # 字符串的三重加密
+    def triple_str_encrypt(self, p, key):
+        key1 = key[:16]
+        key2 = key[16:32]
+        key3 = key[32:]
+        temp_c1 = self.str_encrypt(p, key1)
+        temp_c2 = self.str_encrypt(temp_c1, key2)
+        res = self.str_encrypt(temp_c2, key3)
+        return res
+
+    # 字符串三重解密
+    def triple_str_decrypt(self, c, key):
+        key1 = key[: 16]
+        key2 = key[16: 32]
+        key3 = key[32:]
+        temp_p1 = self.str_decrypt(c, key3)
+        temp_p2 = self.str_decrypt(temp_p1, key2)
+        res = self.str_decrypt(temp_p2, key1)
+        return res
+
+    # 工作模式加密
+    def CBC_encrypt(self, p, key, init_iv):
+        if init_iv == '请在此输入初始向量':
+            init_iv = self.create_key()
+        else:
+            init_iv = init_iv
+        plains = []
+        secrets = []
+        i = 0
+        while i < len(p):
+            plains.append(p[i:i + 16])
+            i += 16
+        for i in range(len(plains)):
+            if i == 0:
+                temp = int(plains[i], 2) ^ int(init_iv, 2)
+                secret = self.encrypt(bin(temp)[2:].zfill(16), key)
+            else:
+                temp = int(plains[i], 2) ^ int(secrets[i - 1], 2)
+                secret = self.encrypt(bin(temp)[2:].zfill(16), key)
+            secrets.append(secret)
+        secret = ''
+        for s in secrets:
+            secret = secret + str(s)
+        return secret, init_iv
+
+    # 字符串工作模式加密
+    def CBC_str_encrypt(self, p, key, init_iv):
+        if init_iv == '请在此输入初始向量':
+            init_iv = self.create_key()
+        else:
+            init_iv = init_iv
+        p = self.string_to_binary(p)
+        plains = []
+        secrets = []
+        i = 0
+        while i < len(p):
+            plains.append(p[i:i + 16])
+            i += 16
+        for i in range(len(plains)):
+            if i == 0:
+                temp = int(plains[i], 2) ^ int(init_iv, 2)
+                secret = self.encrypt(bin(temp)[2:].zfill(16), key)
+            else:
+                temp = int(plains[i], 2) ^ int(secrets[i - 1], 2)
+                secret = self.encrypt(bin(temp)[2:].zfill(16), key)
+            secrets.append(secret)
+        secret = ''
+        for s in secrets:
+            secret += str(s)
+        secret = ''.join(chr(int(secret[i:i + 8], 2)) for i in range(0, len(secret), 8))
+        return secret, init_iv
+
+    # 工作模式解密
+    def CBC_decrypt(self, c, key, init_iv):
+        secrets = []
+        plains = []
+        i = 0
+        while i < len(c):
+            secrets.append(c[i:i + 16])
+            i += 16
+        secrets = secrets[::-1]
+        for i in range(len(secrets)):
+            if i == len(secrets) - 1:
+                temp = self.decrypt(secrets[i], key)
+                plain = bin(int(temp, 2) ^ int(init_iv, 2))[2:].zfill(16)
+            else:
+                temp = self.decrypt(secrets[i], key)
+                plain = bin(int(temp, 2) ^ int(secrets[i + 1], 2))[2:].zfill(16)
+            plains.append(plain)
+        plains = plains[::-1]
+        plain = ''
+        for p in plains:
+            plain += str(p)
+        return plain
+
+    # 工作模式字符串解密
+    def CBC_str_decrypt(self, c, key, init_iv):
+        c = self.string_to_binary(c)
+        secrets = []
+        plains = []
+        i = 0
+        while i < len(c):
+            secrets.append(c[i:i + 16])
+            i += 16
+        secrets = secrets[::-1]
+        for i in range(len(secrets)):
+            if i == len(secrets) - 1:
+                temp = self.decrypt(secrets[i], key)
+                plain = bin(int(temp, 2) ^ int(init_iv, 2))[2:].zfill(16)
+            else:
+                temp = self.decrypt(secrets[i], key)
+                plain = bin(int(temp, 2) ^ int(secrets[i + 1], 2))[2:].zfill(16)
+            plains.append(plain)
+        plains = plains[::-1]
+        plain = ''
+        for p in plains:
+            plain += str(p)
+        plain = ''.join(chr(int(plain[i:i + 8], 2)) for i in range(0, len(plain), 8))
+        return plain
+
     # 生成16位随机密钥
     def create_key(self) -> str:
         str_key = ""
@@ -287,9 +500,12 @@ class S_AES:
 
 if __name__ == '__main__':
     db = S_AES()
-    key = '5555'
-    p_str = 'dddddd'
-    c = db.str_encrypt(p_str, key)
-    p = db.str_decrypt(c, key)
+    key = '55555555'
+    key = db.change_16to2(key)
+    print(key)
+    p = 'ro'
+    c = db.double_str_encrypt(p, key)
     print(c)
-    print(p)
+    p = '1234'
+    c = db.double_encrypt(p, key)
+    print(c)

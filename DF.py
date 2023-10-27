@@ -33,7 +33,7 @@ class GF:
             gflog[gfilog[i]] = i
 
     def add(self, a, b):
-        return (a ^ b) % self.total
+        return a ^ b
 
     def sub(self, a, b):
         return (a ^ b) % self.total
@@ -46,4 +46,3 @@ class GF:
 
     def div(self, a, b):
         return self.gfilog[(self.gflog[a] - self.gflog[b]) % self.total]
-
