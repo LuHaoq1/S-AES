@@ -940,7 +940,7 @@
 
 整体步骤示意图如下
 
-<img width="400" alt="image" src="./image/S-AES整体结构.jpg">
+<img width="400" alt="image" src="./image/S-AES整体步骤.jpg">
 
 2.4 暴力破解
 
